@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang=en>
+<!-- Mirrored from antonin.space/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 09 Oct 2019 04:25:59 GMT -->
+<head>
+    <meta charset=utf-8>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/105/three.min.js"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        // ページの読み込みを待つ
+        window.addEventListener('load', init);
+        const mouse = new THREE.Vector2();
+        var camera, scene, raycaster, renderer;
+        var mesh,box;
+        var rendering;
+        var width,height;
+        function init() {
+            // サイズを指定
+            width = window.screen.width;
+            height = window.screen.height;
+
+            // レンダラーを作成
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.querySelector('#canvas'),
+                antialias: true
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+            // シーンを作成
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+            // カメラを作成
+            camera = new THREE.PerspectiveCamera(45, width / height);
+            camera.position.set(0, 0, +1000);
+
+            // ドーナツを作成
+            const geometry = new THREE.TorusGeometry(300, 100, 64, 100);
+            // マテリアルを作成
+            const material = new THREE.MeshBasicMaterial({color: 0x663300});
+            // メッシュを作成
+            mesh = new THREE.Mesh(geometry, material);
+            // 3D空間にメッシュを追加
+            box = new THREE.Mesh(
+                new THREE.BoxGeometry(100, 100, 100),
+                new THREE.MeshLambertMaterial({color: 0xff00ff})
+            );
+            box.position.set(0, 0, 0);
+            scene.add(box);
+            scene.add(mesh);
+
+            document.addEventListener('mousemove', handleMouseMove,false);
+
+
+
+            raycaster = new THREE.Raycaster();
+            // 毎フレーム時に実行されるループイベントです
+            rendering=true;
+        }
+        function handleMouseMove(ev) {
+            ev.preventDefault();
+            const el = ev.currentTarget;
+            const x = el.clientX - el.offsetLeft;
+            const y = el.clientY - el.offsetTop;
+            const w = el.offsetWidth;
+            const h = el.offsetHeight;
+            // console.log("camera moved")
+            // -1〜+1の範囲で現在のマウス座標を登録する
+            mouse.x = (x / w) * 2 - 1;
+            mouse.y = -(y / h) * 2 + 1;
+        }
+        function tick() {
+
+            // レイキャスト = マウス位置からまっすぐに伸びる光線ベクトルを生成
+            raycaster.setFromCamera(mouse, camera);
+            // console.log(JSON.stringify(mouse));
+            // その光線とぶつかったオブジェクトを得る
+            const intersects = raycaster.intersectObjects(scene.children);
+
+            if (intersects.length > 0) {
+                console.log(`intersecting ${intersects.length}`);
+                if (intersects.length == 1)
+                {
+                    if (rendering) {
+                        intersects[0].object.material.emissive.setHex( 0xff0000 );
+                        rendering = false;
+                        // console.log(true);
+                    } else {
+                        intersects[0].object.material.emissive.setHex( 0x00ff00 );
+                        rendering = true;
+                        // console.log(false);
+                    }
+                }
+                // ぶつかったオブジェクトに対してなんかする
+            } else {
+                // console.log("intersect not found")
+                // メッシュを回転させる
+                mesh.rotation.x += 0.05;
+                mesh.rotation.y += 0.05;
+                box.rotation.x += 0.01;
+                box.rotation.y += 0.01;
+            }
+
+            // レンダリング
+            renderer.render(scene, camera);
+            requestAnimationFrame(tick);
+        }
+        init();
+        tick();
+
+    </script>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+</html>
